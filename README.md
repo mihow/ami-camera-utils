@@ -30,18 +30,11 @@ A companion utility that samples images at regular time intervals based on EXIF 
 - Can preserve directory structure in the output
 - Dry run mode to preview selection before copying
 
-## Requirements
-
-- Python 3.6+
-- exifread
-- typer
-- rich
-
 ## Installation
 
 ```bash
 # Make sure you have the required packages
-pip install exifread typer rich
+poetry install
 ```
 
 ## Usage
@@ -51,7 +44,7 @@ pip install exifread typer rich
 #### Basic Usage
 
 ```bash
-python photo_renamer.py "path/to/photos"
+poetry run photo-renamer "path/to/photos" --inplace
 ```
 
 #### With Date Correction
