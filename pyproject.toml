@@ -1,0 +1,63 @@
+[tool.poetry]
+name = "ami-camera-utils"
+version = "0.1.0"
+description = "Utilities for importing, pre-processing, and uploading images from insect camera traps."
+authors = ["Camera Test Team"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/mihow/ami-camera-utils"
+repository = "https://github.com/mihow/ami-camera-utils"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Utilities",
+]
+packages = [{include = "ami_camera_utils"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+exifread = "^3.0.0"
+typer = {extras = ["all"], version = "^0.9.0"}
+rich = "^13.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0.0"
+black = "^23.0.0"
+isort = "^5.0.0"
+mypy = "^1.0.0"
+
+[tool.poetry.scripts]
+photo-renamer = "ami_camera_utils.photo_renamer:app"
+photo-sampler = "ami_camera_utils.photo_sampler:app"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ["py38", "py39", "py310", "py311", "py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
