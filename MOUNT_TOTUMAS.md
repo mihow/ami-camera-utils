@@ -53,7 +53,7 @@ poetry install
 
 To rename images:
 ```
-poetry run photo-renamer --prefix entocam[i]  '/Volumes/MT_originals/totumas/2025/entocam-[i]' --output-dir '/Volumes/MT_pepared/totumas/2025/entocam-[i]'
+poetry run photo-renamer --prefix entocam[i] '/Volumes/MT_original/totumas/2025/entocam-[i]' --output-dir '/Volumes/MT_pepared/totumas/2025/entocam-[i]'
 ```
 
 To generate 10 minute snapshots:
