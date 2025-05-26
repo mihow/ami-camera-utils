@@ -72,3 +72,9 @@ A confirmation dialog will open.
 
 4. Ensure the top option is set to "Upload".
 5. Click "Continue".
+
+## Sync and process captures on Antenna
+1. Go to Antenna and the list of stations. For each station, open the edit dialog, go to tab "Source image collection" and click "Sync now". We can also do this in bulk from admin.
+2. Go to Antenna and the list of collections. For each collection, click "Populate". This will make the new captures considered for the upcoming processing. 
+3. Go to Django admin and the list of deployments. Select all deployments, pick the action "Regroup captures into events" and click "Go". This will generate sessions on Antenna. In future, this manual step will not be needed.
+4. Go to Antenna and the list of jobs. For each station, create a job to process the captures. Set source image collection to the station captures. Set pipeline to "Panama Plus Species Classifier with OOD detection - Mar 2025".
