@@ -98,24 +98,30 @@ def generate_new_filepath(original_path: Path,
 
 def find_image_files(directory: Path, recursive: bool = True) -> List[Path]:
     """
-    Find all image files in a directory.
+    Find all image files in a directory, excluding hidden files.
     
     Args:
         directory: Directory to search
         recursive: Whether to search recursively
         
     Returns:
-        List of paths to image files
+        List of paths to image files (excluding hidden files)
     """
     image_extensions = {'.jpg', '.jpeg', '.png', '.tif', '.tiff', '.gif', '.bmp'}
     
     if not recursive:
         return [f for f in directory.iterdir() 
-                if f.is_file() and f.suffix.lower() in image_extensions]
+                if (f.is_file() and 
+                    f.suffix.lower() in image_extensions and 
+                    not f.name.startswith('.'))]
     
     image_files = []
     for root, _, files in os.walk(directory):
         for file in files:
+            # Skip hidden files (files starting with '.')
+            if file.startswith('.'):
+                continue
+                
             file_path = Path(root) / file
             if file_path.suffix.lower() in image_extensions:
                 image_files.append(file_path)
@@ -165,8 +171,19 @@ def process_images(directory: Path,
             
         corrected_dt = apply_date_offset(exif_dt, days_offset, hours_offset, 
                                          minutes_offset)
+        
+        # corrected_dt should never be None since exif_dt is not None
+        if not corrected_dt:
+            console.print(f"[red]Error applying date offset for {image_path}[/red]")
+            continue
+            
         new_path = generate_new_filepath(image_path, corrected_dt, prefix, 
                                          output_dir)
+        
+        # Skip files that already exist in the destination
+        if new_path.exists():
+            console.print(f"[yellow]Skipping {image_path.name} - destination already exists: {new_path.name}[/yellow]")
+            continue
         
         results.append({
             "original_path": image_path,
@@ -223,10 +240,6 @@ def process_files(results: List[Dict[str, Any]]) -> int:
     
     for item in results:
         try:
-            if item["new_path"].exists():
-                console.print(f"[red]Cannot process {item['original_path']} - destination already exists: {item['new_path']}[/red]")
-                continue
-            
             if item["is_copy"]:
                 # Copy to output directory
                 shutil.copy2(item["original_path"], item["new_path"])
