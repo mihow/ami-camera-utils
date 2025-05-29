@@ -161,12 +161,19 @@ def process_images(directory: Path,
         console.print(f"[blue]Output directory: {output_dir}[/blue]")
     
     results = []
+    skip_counts = {
+        "no_exif": 0,
+        "existing_files": 0,
+        "date_offset_errors": 0
+    }
+    
+    console.print("[blue]Processing images and checking for existing files...[/blue]")
     
     for image_path in image_files:
         exif_dt = get_exif_datetime(image_path)
         
         if not exif_dt:
-            console.print(f"[yellow]No EXIF datetime found for {image_path}[/yellow]")
+            skip_counts["no_exif"] += 1
             continue
             
         corrected_dt = apply_date_offset(exif_dt, days_offset, hours_offset, 
@@ -174,7 +181,7 @@ def process_images(directory: Path,
         
         # corrected_dt should never be None since exif_dt is not None
         if not corrected_dt:
-            console.print(f"[red]Error applying date offset for {image_path}[/red]")
+            skip_counts["date_offset_errors"] += 1
             continue
             
         new_path = generate_new_filepath(image_path, corrected_dt, prefix, 
@@ -182,7 +189,7 @@ def process_images(directory: Path,
         
         # Skip files that already exist in the destination
         if new_path.exists():
-            console.print(f"[yellow]Skipping {image_path.name} - destination already exists: {new_path.name}[/yellow]")
+            skip_counts["existing_files"] += 1
             continue
         
         results.append({
@@ -192,6 +199,18 @@ def process_images(directory: Path,
             "new_path": new_path,
             "is_copy": output_dir is not None
         })
+    
+    # Display skip summary
+    total_skipped = sum(skip_counts.values())
+    if total_skipped > 0:
+        skip_messages = []
+        if skip_counts["no_exif"] > 0:
+            skip_messages.append(f"{skip_counts['no_exif']} files without EXIF data")
+        if skip_counts["existing_files"] > 0:
+            skip_messages.append(f"{skip_counts['existing_files']} existing files")
+        if skip_counts["date_offset_errors"] > 0:
+            skip_messages.append(f"{skip_counts['date_offset_errors']} date offset errors")
+        console.print(f"[yellow]Skipped {total_skipped} files: {', '.join(skip_messages)}[/yellow]")
     
     return results
 

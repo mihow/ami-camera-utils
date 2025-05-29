@@ -68,24 +68,30 @@ def apply_date_offset(dt: datetime.datetime,
 
 def find_image_files(directory: Path, recursive: bool = True) -> List[Path]:
     """
-    Find all image files in a directory.
+    Find all image files in a directory, excluding hidden files.
     
     Args:
         directory: Directory to search
         recursive: Whether to search recursively
         
     Returns:
-        List of paths to image files
+        List of paths to image files (excluding hidden files)
     """
     image_extensions = {'.jpg', '.jpeg', '.png', '.tif', '.tiff', '.gif', '.bmp'}
     
     if not recursive:
         return [f for f in directory.iterdir() 
-                if f.is_file() and f.suffix.lower() in image_extensions]
+                if (f.is_file() and 
+                    f.suffix.lower() in image_extensions and 
+                    not f.name.startswith('.'))]
     
     image_files = []
     for root, _, files in os.walk(directory):
         for file in files:
+            # Skip hidden files (files starting with '.')
+            if file.startswith('.'):
+                continue
+                
             file_path = Path(root) / file
             if file_path.suffix.lower() in image_extensions:
                 image_files.append(file_path)
@@ -100,7 +106,7 @@ def process_images_for_sampling(
     minutes_offset: int = 0,
     recursive: bool = True,
     output_dir: Optional[Path] = None
-) -> Tuple[List[Dict[str, Any]], int]:
+) -> Tuple[List[Dict[str, Any]], Dict[str, int]]:
     """
     Process images in the directory and select samples based on time interval.
     
@@ -111,12 +117,21 @@ def process_images_for_sampling(
         hours_offset: Hours to add to the timestamp (can be negative)
         minutes_offset: Minutes to add to the timestamp (can be negative)
         recursive: Whether to search recursively
+        output_dir: Optional output directory for checking existing files
         
     Returns:
-        List of dictionaries with file info for sampled images
+        Tuple of (sampled images list, skip counts dictionary)
     """
     image_files = find_image_files(directory, recursive)
     console.print(f"[green]Found {len(image_files)} image files in {directory}[/green]")
+    
+    # Track skipped files by reason
+    skip_counts = {
+        "no_exif": 0,
+        "existing_files": 0
+    }
+    
+    console.print("[blue]Processing images and checking for existing files...[/blue]")
     
     # Create a list of (file_path, timestamp) tuples
     timestamped_files = []
@@ -124,7 +139,7 @@ def process_images_for_sampling(
         exif_dt = get_exif_datetime(image_path)
         
         if not exif_dt:
-            console.print(f"[yellow]No EXIF datetime found for {image_path}[/yellow]")
+            skip_counts["no_exif"] += 1
             continue
             
         corrected_dt = apply_date_offset(exif_dt, days_offset, hours_offset, minutes_offset)
@@ -132,7 +147,7 @@ def process_images_for_sampling(
     
     if not timestamped_files:
         console.print("[yellow]No images with valid timestamps found.[/yellow]")
-        return [], 0
+        return [], skip_counts
     
     # Sort files by timestamp
     timestamped_files.sort(key=lambda x: x[1])
@@ -141,15 +156,11 @@ def process_images_for_sampling(
     interval_delta = datetime.timedelta(minutes=interval_minutes)
     sampled_images = []
     
-    if not timestamped_files:
-        return [], 0
-    
     # Initialize with the first timestamp
     current_interval_start = timestamped_files[0][1]
     next_interval_start = current_interval_start + interval_delta
     
     # Find the first image in each interval
-    skipped_count = 0
     for image_path, timestamp in timestamped_files:
         # If this image is in a new interval, add it to our samples
         if timestamp >= next_interval_start:
@@ -160,7 +171,7 @@ def process_images_for_sampling(
             
             # Check if file already exists in output directory
             if output_dir and (output_dir / image_path.name).exists():
-                skipped_count += 1
+                skip_counts["existing_files"] += 1
                 continue
             
             sampled_images.append({
@@ -172,7 +183,7 @@ def process_images_for_sampling(
         elif len(sampled_images) == 0:
             # Check if file already exists in output directory
             if output_dir and (output_dir / image_path.name).exists():
-                skipped_count += 1
+                skip_counts["existing_files"] += 1
                 continue
             
             sampled_images.append({
@@ -181,7 +192,7 @@ def process_images_for_sampling(
                 "interval_start": current_interval_start
             })
     
-    return sampled_images, skipped_count
+    return sampled_images, skip_counts
 
 def display_samples_summary(samples: List[Dict[str, Any]]) -> None:
     """
@@ -340,7 +351,7 @@ def sample(
         )
         console.print(f"[bold]Applying time correction: {offset_info}[/bold]")
     
-    samples, skipped_count = process_images_for_sampling(
+    samples, skip_counts = process_images_for_sampling(
         directory=directory,
         interval_minutes=interval,
         days_offset=days_offset,
@@ -352,8 +363,15 @@ def sample(
     
     display_samples_summary(samples)
     
-    if skipped_count > 0:
-        console.print(f"[yellow]Skipped {skipped_count} existing files in destination[/yellow]")
+    # Display skip summary
+    total_skipped = sum(skip_counts.values())
+    if total_skipped > 0:
+        skip_messages = []
+        if skip_counts["no_exif"] > 0:
+            skip_messages.append(f"{skip_counts['no_exif']} files without EXIF data")
+        if skip_counts["existing_files"] > 0:
+            skip_messages.append(f"{skip_counts['existing_files']} existing files")
+        console.print(f"[yellow]Skipped {total_skipped} files: {', '.join(skip_messages)}[/yellow]")
     
     if dry_run:
         console.print(f"[yellow]Dry run complete. No files were copied. Would copy {len(samples)} files to {output_dir}[/yellow]")
