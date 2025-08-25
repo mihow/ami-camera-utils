@@ -33,6 +33,7 @@ mypy = "^1.0.0"
 [tool.poetry.scripts]
 photo-renamer = "ami_camera_utils.photo_renamer:app"
 photo-sampler = "ami_camera_utils.photo_sampler:app"
+test = "pytest:main"
 
 [build-system]
 requires = ["poetry-core"]
