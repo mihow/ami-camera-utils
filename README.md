@@ -205,27 +205,16 @@ Options:
   --help                          Show this message and exit.
 ```
 
-## Included Test Scripts
+## Automated Testing
 
-### test_exif.py
-
-A simple script to examine the EXIF data in a sample image:
+Run all tests with
 
 ```bash
-python test_exif.py
+poetry run test
 ```
 
-### test_renaming.py
-
-Shows a preview of the renaming process and helps calculate the appropriate date offset:
+or with run pytest directly to pass custom options
 
 ```bash
-python test_renaming.py
+poetry run pytest tests -v --tb=short --cov=ami_camera_utils
 ```
-
-### test_sampling.py
-
-Demonstrates how to use the photo sampling utility with example commands:
-
-```bash
-python test_sampling.py
