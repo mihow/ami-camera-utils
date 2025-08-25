@@ -40,7 +40,7 @@ def test_skip_existing_files_in_sampling():
         with patch("ami_camera_utils.photo_sampler.get_exif_datetime") as mock_exif:
             mock_exif.side_effect = mock_exif_side_effect
             
-            samples, skipped_count = process_images_for_sampling(
+            samples, skip_counts = process_images_for_sampling(
                 directory=tmp_path,
                 interval_minutes=10,
                 recursive=False,
@@ -49,7 +49,7 @@ def test_skip_existing_files_in_sampling():
             
             # Should skip test1.jpg since it exists, and include test2.jpg
             assert len(samples) == 1
-            assert skipped_count == 1
+            assert skip_counts["existing_files"] == 1
             assert "test2.jpg" in str(samples[0]["original_path"])
 
 
@@ -74,7 +74,7 @@ def test_no_skipping_when_no_output_dir():
         with patch("ami_camera_utils.photo_sampler.get_exif_datetime") as mock_exif:
             mock_exif.side_effect = mock_exif_side_effect
             
-            samples, skipped_count = process_images_for_sampling(
+            samples, skip_counts = process_images_for_sampling(
                 directory=tmp_path,
                 interval_minutes=10,
                 recursive=False,
@@ -83,7 +83,7 @@ def test_no_skipping_when_no_output_dir():
             
             # Should not skip any files when no output directory is specified
             assert len(samples) == 2
-            assert skipped_count == 0
+            assert skip_counts["existing_files"] == 0
 
 
 if __name__ == "__main__":

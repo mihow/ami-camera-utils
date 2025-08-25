@@ -38,7 +38,7 @@ totumas
 ### Sync original photos to MT_original
 To sync files from a card i to the drive with original photos:
 ```
-rsync -rva /Volumes/GardePro/DCIM/ /Volumes/MT_original/totumas/2025/entocam-[i]
+rsync -rva /Volumes/ENTOCAM-[i]/DCIM/ /Volumes/MT_original/totumas/2025/entocam-[i]
 ```
 
 Do this for each card and make sure to replace the `i` with the card number!
